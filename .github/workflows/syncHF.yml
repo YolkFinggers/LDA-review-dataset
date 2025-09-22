@@ -20,4 +20,7 @@ jobs:
         run: |
           git config --global user.email "tanshanyu2004@gmail.com"
           git config --global user.name "YolkFinggers"
-          git push -f https://YolkFinggers:$HF_TOKEN@huggingface.co/spaces/YolkFinggers/LDA-review-dataset main
+          git remote add hf https://YolkFinggers:$HF_TOKEN@huggingface.co/spaces/YolkFinggers/LDA-review-dataset main
+          git fetch hf
+          git merge hf/main --allow-unrelated-histories -m "Sync from GitHub"
+          git push hf HEAD:main 
