@@ -1,49 +1,45 @@
-import gradio as gr
 import pandas as pd
-from main import run_pipeline
+from .data_cleaning import clean_text
+from .data_analysis import build_corpus
+from .lda_modeling import run_lda, evaluate_model
+from .visualization import plot_wordcloud, interactive_viz
+from .utils import vprint
 
-def run_lda_app(file, num_topics=5, passes=10, verbose=False, visualize=True):
-    # Save uploaded file to temp path
-    file_path = "uploaded_file.csv"
-    df = pd.read_csv(file.name)
-    df.to_csv(file_path, index=False)
+def run_pipeline(
+    csv_path,
+    text_column="review_text",
+    num_topics=5,
+    passes=10,
+    verbose=False,
+    visualize=True
+):
+    vprint("🚀 Starting LDA pipeline...", verbose)
 
-    # Run pipeline
-    results = run_pipeline(
-        csv_path=file_path,
-        text_column="review_text",
-        num_topics=num_topics,
-        passes=passes,
-        verbose=verbose,
-        visualize=visualize
-    )
+    # 1. Load Data
+    df = pd.read_csv(csv_path)
+    vprint(f"✅ Loaded dataset with {len(df)} rows.", verbose)
 
-    # Prepare topic display
-    topics_str = "\n".join([f"Topic {i+1}: {t[1]}" for i, t in enumerate(results["topics"])])
-    coherence_score = results["coherence"]
+    # 2. Clean
+    df = clean_text(df, text_column=text_column, verbose=verbose)
 
-    # Return text summary + path to interactive HTML
-    return f"✅ LDA Completed!\n\nCoherence Score: {coherence_score:.4f}\n\nTopics:\n{topics_str}", "lda_visualization.html"
+    # 3. Build Corpus
+    dictionary, corpus = build_corpus(df, verbose=verbose)
 
-# Gradio UI
-with gr.Blocks() as demo:
-    gr.Markdown("## 📊 LDA Topic Modeling for Low-Rated Reviews")
-    with gr.Row():
-        with gr.Column():
-            file_input = gr.File(label="Upload CSV (must contain 'review_text')")
-            num_topics_input = gr.Slider(2, 10, value=5, step=1, label="Number of Topics")
-            passes_input = gr.Slider(1, 20, value=10, step=1, label="Number of Passes")
-            verbose_input = gr.Checkbox(label="Verbose Output", value=True)
-            visualize_input = gr.Checkbox(label="Generate Visualizations", value=True)
-            run_button = gr.Button("Run LDA")
-        with gr.Column():
-            output_text = gr.Textbox(label="LDA Results", lines=20)
-            vis_link = gr.File(label="Download Interactive Visualization")
+    # 4. Run LDA
+    lda_model, topics = run_lda(df, dictionary, corpus, num_topics, passes, verbose=verbose)
 
-    run_button.click(
-        fn=run_lda_app,
-        inputs=[file_input, num_topics_input, passes_input, verbose_input, visualize_input],
-        outputs=[output_text, vis_link]
-    )
+    # 5. Evaluate
+    coherence = evaluate_model(lda_model, corpus, dictionary, df, verbose=verbose)
 
-demo.launch()
+    # 6. Visualization
+    if visualize:
+        plot_wordcloud(lda_model, num_topics, verbose=verbose)
+        vis = interactive_viz(lda_model, corpus, dictionary, verbose=verbose)
+        pyLDAvis.save_html(vis, "lda_visualization.html")
+        vprint("✅ Interactive visualization saved: lda_visualization.html", verbose)
+
+    return {
+        "model": lda_model,
+        "topics": topics,
+        "coherence": coherence
+    }
