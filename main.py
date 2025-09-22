@@ -1,9 +1,10 @@
 import pandas as pd
-from .data_cleaning import clean_text
-from .data_analysis import build_corpus
-from .lda_modeling import run_lda, evaluate_model
-from .visualization import plot_wordcloud, interactive_viz
-from .utils import vprint
+from data_cleaning import clean_text
+from data_analysis import build_corpus
+from lda_modeling import run_lda, evaluate_model
+from visualization import plot_wordcloud, interactive_viz
+from utils import vprint
+import pyLDAvis
 
 def run_pipeline(
     csv_path,
