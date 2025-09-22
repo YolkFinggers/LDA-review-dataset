@@ -1,6 +1,6 @@
 import gradio as gr
 import pandas as pd
-from lda_pipeline.main import run_pipeline, run_advanced_analysis
+from main import run_pipeline, run_advanced_analysis
 
 def run_lda_app(file, num_topics=5, passes=10, verbose=False, visualize=True, advanced=False):
     file_path = "uploaded_file.csv"
