@@ -1,8 +1,8 @@
 ---
 title: Low-Rated Reviews LDA Analyzer
 emoji: 🔬
-colorFrom: "#ff7f50"
-colorTo: "#ff6347"
+colorFrom: red
+colorTo: blue
 sdk: gradio
 sdk_version: "3.38.0"
 app_file: app.py
